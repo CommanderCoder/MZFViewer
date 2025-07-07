@@ -33,11 +33,40 @@ const TOKENS1_SP5025: [&str; 92] = [
     "SIN(", "COS(", "TAN(", "ATN(", "EXP(", "INT(", "LOG(", "LN(", "ABS(", "SGN(", "SQR("
 ];
 
+// Token tables for 1Z-013B BASIC
+const TOKENS_1Z013B: [&str; 128] = [
+    "GOTO", "GOSUB" , "", "RUN", "RETURN", "RESTORE", "RESUME", "LIST", "", "DELETE", "RENUMBER", "AUTO", "", "FOR", "NEXT", "PRINT",
+    "", "INsPUT", "", "IF", "DATA", "READ", "DIM", "REM", "END", "STOP", "CONT", "CLS", "", "ON", "LET", "NEW",
+    "POKE", "OFF", "MODE", "SKIP", "PLOT", "LINE", "RLINE", "MOVE", "RMOVE", "TRON", "TROFF", "INP#", "", "GET", "PCOLOR", "PHOME",
+    "HSET", "GPRINT", "KEY", "AXIS", "LOAD", "SAVE", "MERGE", "", "CONSOLE", "", "OUT", "CIRCLE", "TEST", "PAGE", "", "",
+    "ERASE", "ERROR", "", "USR", "BYE", "", "", "DEF", "", "", "", "", "", "", "WOPEN", "CLOSE",
+    "ROPEN", "", "", "", "", "", "", "", "", "KILL", "", "", "", "", "", "",
+    "TO", "STEP", "THEN", "USING", "", "", "TAB", "SPC", "", "", "", "OR", "AND", "", "><", "<>",
+    "=<", "<=", "=>", ">=", "=", ">", "<", "+", "-", "", "", "/", "*", "^","ext1", "ext2"
+];
+
+const TOKENS_1Z013B_E1: [&str; 48] =  [
+    "", "SET", "RESET", "COLOR", "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "MUSIC", "TEMPO", "CURSOR", "VERIFY", "CLR", "LIMIT", "", "", "", "", "", "", "BOOT", ""
+];
+
+const TOKENS_1Z013B_E2: [&str; 72] =  [
+    "INT", "ABS", "SIN", "COS", "TAN", "LN", "EXP", "SQR", "RND", "PEEK", "ATN", "SGN", "LOG", "PAI", "", "RAD",
+    "", "", "", "", "", "EOF", "", "", "", "", "", "", "", "", "JOY", "",
+    "", "STR$", "HEX$", "", "", "", "", "", "", "", "", "ASC", "LEN", "VAL", "", "",
+    "", "", "", "ERN", "ERL", "SIZE", "", "", "", "", "LEFT$", "RIGHT$", "MID$", "", "", "",
+    "", "", "", "", "TI$", "", "", "FN"
+];
+
+
+
 /// Enum representing different BASIC versions.
 #[derive(Debug, Clone, PartialEq)] // Add PartialEq for comparison
 enum BasicVersion {
     SA5510,
     SP5025,
+    V1Z013B, // 1Z-013B BASIC version
 }
 
 
@@ -84,10 +113,11 @@ impl MZDetokenizer {
     }
 
     /// Returns the appropriate token tables based on the detected BASIC version.
-    fn get_token_tables(&self) -> (&[&str], &[&str]) {
+    fn get_token_tables(&self) -> (&[&str], &[&str], &[&str]) {
         match self.version {
-            BasicVersion::SP5025 => (&TOKENS1_SP5025, &[]),
-            _ => (&TOKENS1, &TOKENS2), // Default to SA-5510 tokens if not SP5025
+            BasicVersion::SP5025 => (&TOKENS1_SP5025, &[], &[]),
+            BasicVersion::V1Z013B => (&TOKENS_1Z013B, &TOKENS_1Z013B_E1, &TOKENS_1Z013B_E2), // 1Z-013B BASIC tokens
+            _ => (&TOKENS1, &TOKENS2, &[]), // Default to SA-5510 tokens if not SP5025
         }
     }
 
@@ -115,7 +145,7 @@ impl MZDetokenizer {
     /// This is the core logic for converting the binary tokens into human-readable BASIC.
     fn detokenise_basic(&self, data: &[u8]) -> io::Result<String> {
         let mut output = String::new();
-        let (tokens1, tokens2) = self.get_token_tables();
+        let (tokens1, tokens2, tokens3,) = self.get_token_tables();
         let mut offset = 128; // Start after the header
 
         loop {
@@ -142,20 +172,20 @@ impl MZDetokenizer {
                 bytes_read += 1;
 
                 if literal_mode {
-                    if byte == 0x0D {
+                    if byte == 0x0D || byte == 0x00{
                         line.push('\n');
                     } else if let Some(&ch) = self.sharp_ascii.get(&byte) {
                         line.push(ch);
                     } else if (0x20..=0x7E).contains(&byte) {
                         line.push(byte as char);
                     } else {
-                        line.push(' ');
+                        line.push('◇');
                     }
                     continue;
                 }
 
                 match byte {
-                    0x0D => {
+                    0x00 | 0x0D => { 
                         line.push('\n');
                         line_end = true;
                     }
@@ -215,6 +245,24 @@ impl MZDetokenizer {
                                     literal_mode = true;
                                 }
                             }
+                            BasicVersion::V1Z013B => {
+                                let mut tok = (b - 0x80) as usize;
+                                if b == 0xfe || b == 0xff {
+                                    let next_byte = Self::read_u8(data, &mut offset)?;
+                                    bytes_read += 1;
+                                    tok = (next_byte - 0x80) as usize;
+                                }
+                                match b {
+                                    0xfe if tok < tokens2.len() => line.push_str(tokens2[tok]),
+                                    0xff if tok < tokens3.len() => line.push_str(tokens3[tok]),
+                                    _ if b >= 0x80 => line.push_str(tokens1[tok]),
+                                    _ => line.push_str(&format!(":0x{:02X} 0x{:02X}]", b, tok)),
+                                }
+                                if b == 0x97 || b == 0x94 {
+                                    literal_mode = true;
+                                }
+
+                            }
                             _ => {
                                 if b == 0x80 {
                                     let next_byte = Self::read_u8(data, &mut offset)?;
@@ -245,7 +293,6 @@ impl MZDetokenizer {
                             }
                         }
                     }
-                    0x00 => {}
                     _ => {
                         if byte == 0x22 {
                             quote = !quote;
@@ -295,7 +342,8 @@ pub fn process_binary(data: &[u8], mode: String) -> String {
     let version = match mode.as_str() {
         "SA" => BasicVersion::SA5510, // SA for SA-5510 detokenization
         "SP" => BasicVersion::SP5025, // SP for SP-5025 detokenization
-        _ => return "Error: Invalid mode specified. Use 'SA' (SA-5510) or 'SP' (SP-5025).".to_string(),
+        "1Z" => BasicVersion::V1Z013B, // 1Z for 1Z-013B detokenization
+        _ => return "Error: Invalid mode specified. Use 'SA' (SA-5510) or 'SP' (SP-5025) or '1Z' (1Z-013B).".to_string(),
     };
 
     let detokenizer = MZDetokenizer::new(version);
