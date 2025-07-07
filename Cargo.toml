@@ -1,0 +1,22 @@
+# Cargo.toml
+
+[package]
+name = "rust-wasm-converter"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# wasm-bindgen is used to generate JavaScript bindings for Rust code,
+# allowing Rust functions to be called from JavaScript and vice-versa.
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3.77", features = ["console"] } # Add this line
+
+# Removed: wee_alloc = { version = "0.4", features = ["abort"] }
+
+[profile.release]
+# Optimize for size when building the release version of the WASM module.
+# This is crucial for web applications where download size matters.
+opt-level = "s"
