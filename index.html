@@ -139,7 +139,7 @@
         let processFile; // Declare here for use in fetch logic
 
         // Check for URL in query string
-        const fileUrl = getQueryParam('url');
+        const fileUrl = "https://corsproxy.io/?"+getQueryParam('url');
 
         // Initialize the WASM module. This must be called before using any WASM functions.
         init().then(() => {
