@@ -115,7 +115,7 @@
 
         // Variable to store the raw binary data of the uploaded file
         let fileData = null;
-        let fileName = 'MZFBasic.txt'; 
+        let fileName = 'MZFBasic'; 
 
         // Function to enable/disable the save button
         const toggleSaveButton = () => {
@@ -133,11 +133,11 @@
                     messageParagraph.classList.remove('hidden'); // Show message
                     useBothParagraph.classList.add('hidden'); // Hide instructions
                     toggleSaveButton(); // Disable save button
-                    fileName = 'MZFBasic.txt';
+                    fileName = 'MZFBasic';
                     return;
                 }
                 
-                fileName = fileData.FileName || 'MZFBasic.txt'; // Use the uploaded file name if available
+                fileName = fileData.fileName || 'MZFBasic'; // Use the uploaded file name if available
                 messageParagraph.classList.add('hidden'); // Hide message if file is present
                 useBothParagraph.classList.remove('hidden'); // Show instructions for using both modes
 
