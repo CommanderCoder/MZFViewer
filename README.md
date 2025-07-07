@@ -3,6 +3,12 @@ Sharp MZ computer file viewer
 
 For SP-5025 and SA-5510 Basic
 
+## Web version
+
+You can access this tool at https://mzfviewer.web.app
+
+![screenshot of the website](screenshot.png)
+
 ## Features
 
 You can drag a MZF file to the file box (or press the button).  It will detokenise the binary file into the BASIC code. You can do what you like with that code.
