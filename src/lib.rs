@@ -71,6 +71,7 @@ enum MZFEncoding {
     SP5025,
     V1Z013B, // 1Z-013B BASIC version
     Z80,     // Z80 disassembly
+    DUMP,    // Hexadecimal output
 }
 
 
@@ -350,7 +351,8 @@ pub fn process_binary(data: &[u8], mode: String) -> String {
         "SP" => MZFEncoding::SP5025, // SP for SP-5025 detokenization
         "1Z" => MZFEncoding::V1Z013B, // 1Z for 1Z-013B detokenization
         "Z80" => MZFEncoding::Z80,     // Z80 for Z80 disassembly
-        _ => return "Error: Invalid mode specified. Use 'SA' (SA-5510) or 'SP' (SP-5025) or '1Z' (1Z-013B).".to_string(),
+        "DUMP" => MZFEncoding::DUMP,     // DUMP for hexadecimal & ASCII output
+        _ => return "Error: Invalid mode specified. Expected (SA, SP, 1Z, Z80, DUMP)".to_string(),
     };
 
     let detokenizer = MZDetokenizer::new(version);
@@ -358,17 +360,41 @@ pub fn process_binary(data: &[u8], mode: String) -> String {
     if version == MZFEncoding::Z80 {
         let skip_bytes = 128; // No bytes to skip for Z80 disassembly
         let start_address = u16::from_le_bytes([data[0x14], data[0x15]]); // default start address is found at bytes 0x14,0x15 (LE)
+        let exec_address = u16::from_le_bytes([data[0x16], data[0x17]]); // default exec address is found at bytes 0x16,0x17 (LE)
 
         // Disassemble
         let mut disasm = Z80Disassembler::new();
-        let result = disasm.disassemble(&data[skip_bytes..], start_address);
+        let result = disasm.disassemble(&data[skip_bytes..], start_address, exec_address);
 
         // If the mode is Z80, disassemble the Z80 code.
         result.into_iter()
             .map(|line| line.to_string())
             .collect::<Vec<String>>()
             .join("\n")
-
+    } else if version == MZFEncoding::DUMP {
+        // If the mode is DUMP, return the hexadecimal and ASCII representation of the data.
+        let mut hex_output = String::new();
+        for (i, byte) in data.iter().enumerate() {
+            if i % 16 == 0 {
+                if i > 0 {
+                    hex_output.push_str("\n");
+                }
+                hex_output.push_str(&format!("{:04X}: ", i));
+            }
+            hex_output.push_str(&format!("{:02X} ", byte));
+            if i % 16 == 15 || i == data.len() - 1 {
+                let ascii_part: String = data[i - (i % 16)..=i]
+                    .iter()
+                    .map(|b| if *b >= 32 && *b < 127 {
+                        *b as char
+                    } else {
+                        '.'
+                    })
+                    .collect();
+                hex_output.push_str(&format!(" | {}", ascii_part));
+            }
+        }
+        hex_output 
     } else {
         // Attempt to detokenize the BASIC code.
         match detokenizer.detokenise_basic(data) {

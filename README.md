@@ -16,12 +16,17 @@ You can drag a MZF file to the file box (or press the button).  It will detokeni
 I recommend you switch between the versions of basic as there is no way to reliably detect which version is being used by the tape file.
 
 ## Background
-I wanted a simple way to view MZF files used by Sharp MZ computer emulators like the MZ-80K, MZ-80A, and MZ-700. While I discovered https://github.com/tautology0/detokenisers for detokenising these files, I was looking for a web-based solution. 
+I wanted a simple way to view MZF files used by Sharp MZ computer emulators like the MZ-80K, MZ-80A, and MZ-700. While I discovered https://github.com/tautology0/detokenisers for detokenising these files, I was looking for a web-based solution.
 
 I saw the opportunity to experiment with Gemini for software development and to explore Rust and WebAssembly (WASM). After a day of sharing files and writing prompts, this tool was created.
 
-# Gemini and tautology0
+Another day, and I used Claude.AI to create a z80 disassembler.  It wasn't happy to make so much code but, line by line in Visual Studio Code with the CoPilot extension, I was able to build a reasonable z80 disassembler.
+
+One last task, and another 20 minutes with CoPilot, and we have a ascii/hex dump.
+
+# Gemini, Claude.Ai and tautology0 detokenisers
 . https://gemini.google.com
+. https://claude.ai
 . https://github.com/tautology0/detokenisers
 
 # Build Instructions

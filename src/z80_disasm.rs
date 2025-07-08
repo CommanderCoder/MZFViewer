@@ -7,7 +7,7 @@ impl Z80Disassembler {
         Self { pc: 0 }
     }
 
-    pub fn disassemble(&mut self, data: &[u8], start_address: u16) -> Vec<String> {
+    pub fn disassemble(&mut self, data: &[u8], start_address: u16, exec_address: u16) -> Vec<String> {
         let mut result = Vec::new();
         let mut pos = 0;
         self.pc = start_address;
@@ -27,7 +27,7 @@ impl Z80Disassembler {
                 .map(|&b| if b.is_ascii_graphic() || b == b' ' { b as char } else { '.' })
                 .collect::<String>();
 
-            let line = format!("{:04X}: {:<12} {:<20} ; {}", self.pc, hex_bytes, instruction, ascii);
+            let line = format!("{:04X}: {} {:<12} {:<20} ; {}", self.pc, if exec_address == self.pc { ">" } else { " " }, hex_bytes, instruction, ascii);
             result.push(line);
             
             pos += bytes_consumed;
@@ -329,7 +329,6 @@ impl Z80Disassembler {
                     return ("???".to_string(), 1);
                 }
                 let offset = data[1] as i8;
-                let target = self.pc.wrapping_add(2).wrapping_add(offset as u16);
                 (format!("LD HL,SP+{:02X}H", offset), 2)
             },
             0xFC => {
