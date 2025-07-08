@@ -1,5 +1,8 @@
 // src/lib.rs
 
+mod z80_disasm;
+use z80_disasm::Z80Disassembler;
+
 use wasm_bindgen::prelude::*;
 use std::collections::HashMap;
 use std::io::{self}; 
@@ -62,11 +65,12 @@ const TOKENS_1Z013B_E2: [&str; 72] =  [
 
 
 /// Enum representing different BASIC versions.
-#[derive(Debug, Clone, PartialEq)] // Add PartialEq for comparison
-enum BasicVersion {
+#[derive(Debug, Clone, PartialEq, Copy)] // Add PartialEq for comparison
+enum MZFEncoding {
     SA5510,
     SP5025,
     V1Z013B, // 1Z-013B BASIC version
+    Z80,     // Z80 disassembly
 }
 
 
@@ -74,12 +78,12 @@ enum BasicVersion {
 struct MZDetokenizer {
     sharp_ascii: HashMap<u8, char>,
     string_literal_map: HashMap<u8, &'static str>,
-    version: BasicVersion,
+    version: MZFEncoding,
 }
 
 impl MZDetokenizer {
     /// Creates a new MZDetokenizer instance for a given BASIC version.
-    fn new(version: BasicVersion) -> Self {
+    fn new(version: MZFEncoding) -> Self {
         let mut sharp_ascii = HashMap::new();
         // Mapping for specific Sharp ASCII characters
         let ascii_map = [
@@ -115,8 +119,8 @@ impl MZDetokenizer {
     /// Returns the appropriate token tables based on the detected BASIC version.
     fn get_token_tables(&self) -> (&[&str], &[&str], &[&str]) {
         match self.version {
-            BasicVersion::SP5025 => (&TOKENS1_SP5025, &[], &[]),
-            BasicVersion::V1Z013B => (&TOKENS_1Z013B, &TOKENS_1Z013B_E1, &TOKENS_1Z013B_E2), // 1Z-013B BASIC tokens
+            MZFEncoding::SP5025 => (&TOKENS1_SP5025, &[], &[]),
+            MZFEncoding::V1Z013B => (&TOKENS_1Z013B, &TOKENS_1Z013B_E1, &TOKENS_1Z013B_E2), // 1Z-013B BASIC tokens
             _ => (&TOKENS1, &TOKENS2, &[]), // Default to SA-5510 tokens if not SP5025
         }
     }
@@ -236,7 +240,7 @@ impl MZDetokenizer {
                     }
                     b if b >= 0x80 && !quote && !token => {
                         match self.version {
-                            BasicVersion::SP5025 => {
+                            MZFEncoding::SP5025 => {
                                 let tok = (b - 0x80) as usize;
                                 if tok < tokens1.len() {
                                     line.push_str(tokens1[tok]);
@@ -245,7 +249,7 @@ impl MZDetokenizer {
                                     literal_mode = true;
                                 }
                             }
-                            BasicVersion::V1Z013B => {
+                            MZFEncoding::V1Z013B => {
                                 let mut tok = (b - 0x80) as usize;
                                 if b == 0xfe || b == 0xff {
                                     let next_byte = Self::read_u8(data, &mut offset)?;
@@ -323,6 +327,8 @@ impl MZDetokenizer {
 
         Ok(output)
     }
+
+
 }
 
 
@@ -340,17 +346,34 @@ impl MZDetokenizer {
 pub fn process_binary(data: &[u8], mode: String) -> String {
     // Determine the BASIC version based on the selected mode.
     let version = match mode.as_str() {
-        "SA" => BasicVersion::SA5510, // SA for SA-5510 detokenization
-        "SP" => BasicVersion::SP5025, // SP for SP-5025 detokenization
-        "1Z" => BasicVersion::V1Z013B, // 1Z for 1Z-013B detokenization
+        "SA" => MZFEncoding::SA5510, // SA for SA-5510 detokenization
+        "SP" => MZFEncoding::SP5025, // SP for SP-5025 detokenization
+        "1Z" => MZFEncoding::V1Z013B, // 1Z for 1Z-013B detokenization
+        "Z80" => MZFEncoding::Z80,     // Z80 for Z80 disassembly
         _ => return "Error: Invalid mode specified. Use 'SA' (SA-5510) or 'SP' (SP-5025) or '1Z' (1Z-013B).".to_string(),
     };
 
     let detokenizer = MZDetokenizer::new(version);
 
-    // Attempt to detokenize the BASIC code.
-    match detokenizer.detokenise_basic(data) {
-        Ok(basic_listing) => basic_listing,
-        Err(e) => format!("Error detokenizing file: {}", e),
+    if version == MZFEncoding::Z80 {
+        let skip_bytes = 128; // No bytes to skip for Z80 disassembly
+        let start_address = u16::from_le_bytes([data[0x14], data[0x15]]); // default start address is found at bytes 0x14,0x15 (LE)
+
+        // Disassemble
+        let mut disasm = Z80Disassembler::new();
+        let result = disasm.disassemble(&data[skip_bytes..], start_address);
+
+        // If the mode is Z80, disassemble the Z80 code.
+        result.into_iter()
+            .map(|line| line.to_string())
+            .collect::<Vec<String>>()
+            .join("\n")
+
+    } else {
+        // Attempt to detokenize the BASIC code.
+        match detokenizer.detokenise_basic(data) {
+            Ok(basic_listing) => basic_listing,
+            Err(e) => format!("Error detokenizing file: {}", e),
+        }
     }
 }

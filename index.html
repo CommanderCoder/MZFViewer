@@ -80,6 +80,11 @@
                        class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="mode1Z" class="ml-2 text-gray-700 text-lg font-medium">1Z-013B Detokenizer</label>
             </div>
+            <div class="flex items-center">
+                <input type="radio" id="modeZ80" name="conversionMode" value="z80"
+                       class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeZ80" class="ml-2 text-gray-700 text-lg font-medium">Z80 Disassembly</label>
+            </div>
         </div>
 
         <!-- Output Display Area -->
@@ -122,6 +127,7 @@
         const modeSA = document.getElementById('modeSA');
         const modeSP = document.getElementById('modeSP');
         const mode1Z = document.getElementById('mode1Z');
+        const modeZ80 = document.getElementById('modeZ80');
         const messageParagraph = document.getElementById('message');
         const useBothParagraph = document.getElementById('useboth');
         const saveButton = document.getElementById('saveButton');
@@ -139,7 +145,7 @@
         let processFile; // Declare here for use in fetch logic
 
         // Check for URL in query string
-        const fileUrl = "https://corsproxy.io/?"+getQueryParam('url');
+        const fileUrl = getQueryParam('url');
 
         // Initialize the WASM module. This must be called before using any WASM functions.
         init().then(() => {
@@ -159,7 +165,13 @@
                 messageParagraph.classList.add('hidden');
                 useBothParagraph.classList.remove('hidden');
 
-                const mode = modeSA.checked ? 'SA' : modeSP.checked ? 'SP' : '1Z';
+                let mode;
+                if (modeSA.checked) mode = 'SA';
+                else if (modeSP.checked) mode = 'SP';
+                else if (mode1Z.checked) mode = '1Z';
+                else if (modeZ80.checked) mode = 'Z80';
+                else mode = 'SA';
+
                 try {
                     const result = process_binary(new Uint8Array(fileData), mode);
                     outputPre.textContent = result;
@@ -201,7 +213,7 @@
                     }
                 };
 
-                fetch(fileUrl)
+                fetch("https://corsproxy.io/?"+fileUrl)
                     .then(async response => {
                         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
                         const arrayBuffer = await response.arrayBuffer();
@@ -290,6 +302,7 @@
             modeSA.addEventListener('change', () => processFile && processFile());
             modeSP.addEventListener('change', () => processFile && processFile());
             mode1Z.addEventListener('change', () => processFile && processFile());
+            modeZ80.addEventListener('change', () => processFile && processFile());
 
             // Event listener for the Save button
             saveButton.addEventListener('click', () => {
