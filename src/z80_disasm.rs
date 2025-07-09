@@ -1,13 +1,18 @@
+use std::char;
+
+use crate::MZDetokenizer;
+
 pub struct Z80Disassembler {
     pc: u16,
+    d: MZDetokenizer,
 }
 
 impl Z80Disassembler {
-    pub fn new() -> Self {
-        Self { pc: 0 }
+    pub fn new(detokenizer: MZDetokenizer) -> Self {
+        Self { pc: 0, d: detokenizer }
     }
 
-    pub fn disassemble(&mut self, data: &[u8], start_address: u16, exec_address: u16) -> Vec<String> {
+    pub fn disassemble(&mut self, data: &[u8], start_address: u16, exec_address: u16, charset_flag: bool) -> Vec<String> {
         let mut result = Vec::new();
         let mut pos = 0;
         self.pc = start_address;
@@ -24,7 +29,15 @@ impl Z80Disassembler {
             
             let ascii = data[pos..pos + bytes_consumed]
                 .iter()
-                .map(|&b| if b.is_ascii_graphic() || b == b' ' { b as char } else { '.' })
+                .map(|&b| if b.is_ascii_graphic() || b == b' ' { b as char } else if charset_flag {
+                        if let Some(&ch) = self.d.sharp_ascii.get(&b) {
+                            ch
+                        } else {
+                            '.'
+                        }
+                    } else {
+                        '.'
+                    })
                 .collect::<String>();
 
             let line = format!("{:04X}: {} {:<12} {:<20} ; {}", self.pc, if exec_address == self.pc { ">" } else { " " }, hex_bytes, instruction, ascii);

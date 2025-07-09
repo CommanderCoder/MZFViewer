@@ -7,6 +7,8 @@ For SP-5025 and SA-5510 Basic
 
 You can access this tool at https://mzfviewer.web.app
 
+https://mzfviewer.web.app/?url=https://mz-archive.co.uk/downloads/files/ACE-RACER-700.mzf&mode=1Z
+
 ![screenshot of the website](screenshot.png)
 
 ## Features

@@ -64,40 +64,51 @@
         </div>
 
         <!-- Conversion Mode Selection -->
-        <div class="flex justify-center space-x-8 p-4 border border-gray-300 rounded-lg bg-gray-50">
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+            <div class="col-span-full">
+                <p id="useAlt" class="text-lg text-gray-800 mb-3">Try other versions of BASIC, Z80 or Hex using these.</p>
+            </div>
             <div class="flex items-center">
                 <input type="radio" id="modeSA" name="conversionMode" value="hex" checked
-                       class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeSA" class="ml-2 text-gray-700 text-lg font-medium">SA-5510 Detokenizer</label>
             </div>
             <div class="flex items-center">
                 <input type="radio" id="modeSP" name="conversionMode" value="ascii"
-                       class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeSP" class="ml-2 text-gray-700 text-lg font-medium">SP-5025 Detokenizer</label>
             </div>
             <div class="flex items-center">
                 <input type="radio" id="mode1Z" name="conversionMode" value="ascii"
-                       class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="mode1Z" class="ml-2 text-gray-700 text-lg font-medium">1Z-013B Detokenizer</label>
             </div>
             <div class="flex items-center">
                 <input type="radio" id="modeZ80" name="conversionMode" value="z80"
-                       class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeZ80" class="ml-2 text-gray-700 text-lg font-medium">Z80 Disassembly</label>
             </div>
             <div class="flex items-center">
                 <input type="radio" id="modeDump" name="conversionMode" value="dump"
-                       class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="modeDump" class="ml-2 text-gray-700 text-lg font-medium">ASCII/Hex Dump</label>
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeDump" class="ml-2 text-gray-700 text-lg font-medium">Hex Dump</label>
+            </div>
+            <div id="charset" class="flex items-center">
+                <input type="checkbox" id="charsetToggle" class="form-checkbox h-5 w-5 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">SHARP loweracase</label>
+            </div>
+            <div class="col-span-full">
+                        <p>Byte 0 of Hex Dump is the 
+                <a href="https://sharpmz.no/original/filetypes.htm" class="text-blue-600 hover:underline">file type</a>.
+            </p>
+            <p id="outputType"></p>
             </div>
         </div>
 
         <!-- Output Display Area -->
         <div class="p-6 border border-gray-300 rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
-            <h2 class="text-xl font-semibold text-gray-800 mb-3">Converted Output:</h2>
-            <p id="useAlt" class="text-lg text-gray-800 mb-3">Try other versions of BASIC, Z80 or Hex using the buttons above.</p>
-            <pre id="output" class="text-gray-900 text-sm bg-white p-4 rounded-md border border-gray-200"></pre>
             <p id="message" class="text-red-600 text-sm mt-2 hidden">Please upload a file.</p>
+            <pre id="output" class="text-gray-900 text-sm bg-white p-4 rounded-md border border-gray-200"></pre>
         </div>
 
         <!-- Save Button -->
@@ -137,7 +148,12 @@
         const messageParagraph = document.getElementById('message');
         const useAltParagraph = document.getElementById('useAlt');
         const saveButton = document.getElementById('saveButton');
+        const charset = document.getElementById('charset');
+        const charsetToggle = document.getElementById('charsetToggle');
         const fileInputSection = fileInput.closest('div'); // The file upload section container
+        const outputTypeSpan = document.getElementById('outputType');
+
+        // Initialize fileData and fileName
 
         let fileData = null;
         let fileName = 'MZFBasic';
@@ -153,11 +169,32 @@
         // Check for URL in query string
         const fileUrl = getQueryParam('url');
 
+        // check for mode in query string
+        const modeParam = getQueryParam('mode');
+        if (modeParam) {
+            if (modeParam === 'SA') modeSA.checked = true;
+            else if (modeParam === 'SP') modeSP.checked = true;
+            else if (modeParam === '1Z') mode1Z.checked = true;
+            else if (modeParam === 'Z80') modeZ80.checked = true;   
+            else if (modeParam === 'DUMP') modeDump.checked = true;
+            else modeDump.checked = true; // Default to DUMP if invalid mode
+        } else {
+            modeSP.checked = true; // Default to SP if no mode specified
+        }
+
         // Initialize the WASM module. This must be called before using any WASM functions.
         init().then(() => {
             console.log("WASM module initialized successfully.");
 
             processFile = () => {
+
+                if (modeDump.checked || modeZ80.checked) {
+                    charset.classList.remove('hidden');
+                }
+                else {
+                    charset.classList.add('hidden');
+                }
+
                 if (!fileData) {
                     outputPre.textContent = '';
                     messageParagraph.classList.remove('hidden');
@@ -179,8 +216,22 @@
                 else if (modeDump.checked) mode = 'DUMP';
                 else mode = 'SA';
 
+                
                 try {
-                    const result = process_binary(new Uint8Array(fileData), mode);
+                    const firstbyte = new Uint8Array(fileData)[0];
+                    const typeText = {
+                        0x01: 'Machine Code (Z80)',
+                        0x02: 'BASIC (SP-5025) or BASIC (SA-5510)',
+                        0x05: 'BASIC (1Z-013B)',
+                        // Add more types as needed
+                    }[firstbyte] || 'Unknown Type';
+                    outputTypeSpan.textContent = `0x${firstbyte.toString(16).padStart(2, '0')} - ${typeText}`;
+                } catch (e) {
+                    console.error("Error reading first byte:", e);
+                }
+
+                try {
+                    const result = process_binary(new Uint8Array(fileData), mode, charsetToggle.checked);
                     outputPre.textContent = result;
                 } catch (e) {
                     console.error("Error processing binary:", e);
@@ -311,7 +362,8 @@
             mode1Z.addEventListener('change', () => processFile && processFile());
             modeZ80.addEventListener('change', () => processFile && processFile());
             modeDump.addEventListener('change', () => processFile && processFile());
-
+            charsetToggle.addEventListener('change', () => processFile && processFile());
+            
             // Event listener for the Save button
             saveButton.addEventListener('click', () => {
                 const textToSave = outputPre.textContent;

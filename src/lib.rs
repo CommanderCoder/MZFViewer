@@ -340,11 +340,12 @@ impl MZDetokenizer {
 /// * `mode` - A string indicating the desired BASIC version for detokenization:
 ///            "hex" for SA-5510 (hexadecimal output from detokenizer, but detokenizer uses SA-5510 rules).
 ///            "ascii" for SP-5025 (ASCII output from detokenizer, but detokenizer uses SP-5025 rules).
+/// * `charsetFlag` - A boolean indicating whether to use the SHARP character set for detokenization.
 ///
 /// # Returns
 /// A `String` containing the detokenized BASIC listing or an error message.
 #[wasm_bindgen]
-pub fn process_binary(data: &[u8], mode: String) -> String {
+pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
     // Determine the BASIC version based on the selected mode.
     let version = match mode.as_str() {
         "SA" => MZFEncoding::SA5510, // SA for SA-5510 detokenization
@@ -363,8 +364,8 @@ pub fn process_binary(data: &[u8], mode: String) -> String {
         let exec_address = u16::from_le_bytes([data[0x16], data[0x17]]); // default exec address is found at bytes 0x16,0x17 (LE)
 
         // Disassemble
-        let mut disasm = Z80Disassembler::new();
-        let result = disasm.disassemble(&data[skip_bytes..], start_address, exec_address);
+        let mut disasm = Z80Disassembler::new(detokenizer);
+        let result = disasm.disassemble(&data[skip_bytes..], start_address, exec_address, charset_flag);
 
         // If the mode is Z80, disassemble the Z80 code.
         result.into_iter()
@@ -383,15 +384,24 @@ pub fn process_binary(data: &[u8], mode: String) -> String {
             }
             hex_output.push_str(&format!("{:02X} ", byte));
             if i % 16 == 15 || i == data.len() - 1 {
-                let ascii_part: String = data[i - (i % 16)..=i]
-                    .iter()
-                    .map(|b| if *b >= 32 && *b < 127 {
-                        *b as char
+            let text_part: String = data[i - (i % 16)..=i]
+                .iter()
+                .map(|&b| { 
+                    if b >= 32 && b < 127 {
+                        b as char
+                    } else if charset_flag {
+                        if let Some(&ch) = detokenizer.sharp_ascii.get(&b) {
+                            ch
+                        } else {
+                            '.'
+                        }
                     } else {
                         '.'
-                    })
-                    .collect();
-                hex_output.push_str(&format!(" | {}", ascii_part));
+                    }
+                })
+                .collect();
+
+                hex_output.push_str(&format!(" | {}", text_part));
             }
         }
         hex_output 
