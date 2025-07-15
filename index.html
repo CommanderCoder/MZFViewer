@@ -49,10 +49,10 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="container bg-white shadow-xl rounded-lg p-8 space-y-6">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Sharp MZF File Viewer</h1>
+        <h1 id="title" class="text-3xl font-bold text-center text-gray-800 mb-6">Sharp MZF File Viewer</h1>
 <h4 class="text-center">by <a class="text-blue-600 hover:underline mt-2" href="https://commandercoder.com/">Commander Coder</a></h4>        <!-- File Upload Section -->
         <div class="flex flex-col items-center p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <label for="fileInput" class="block text-lg font-medium text-gray-700 mb-3">Upload a Sharp MZF File:</label>
+            <label for="fileInput" class="block text-lg font-medium text-gray-700 mb-3">Upload a Binary File:</label>
             <input type="file" id="fileInput" class="block w-full text-sm text-gray-500
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-full file:border-0
@@ -67,17 +67,17 @@
             <div class="col-span-full">
                 <p id="useAlt" class="text-lg text-gray-800 mb-3">Try other versions of BASIC, Z80 or Hex using these.</p>
             </div>
-            <div class="flex items-center">
+            <div id="divSA" class="flex items-center">
                 <input type="radio" id="modeSA" name="conversionMode" value="hex" checked
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeSA" class="ml-2 text-gray-700 text-lg font-medium">SA-5510 Detokenizer</label>
             </div>
-            <div class="flex items-center">
+            <div id="divSP" class="flex items-center">
                 <input type="radio" id="modeSP" name="conversionMode" value="ascii"
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeSP" class="ml-2 text-gray-700 text-lg font-medium">SP-5025 Detokenizer</label>
             </div>
-            <div class="flex items-center">
+            <div id="div1Z" class="flex items-center">
                 <input type="radio" id="mode1Z" name="conversionMode" value="ascii"
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="mode1Z" class="ml-2 text-gray-700 text-lg font-medium">1Z-013B Detokenizer</label>
@@ -92,11 +92,16 @@
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeDump" class="ml-2 text-gray-700 text-lg font-medium">Hex Dump</label>
             </div>
+            <div id="divZX80" class="flex items-center">
+                <input type="radio" id="modeZX80Basic" name="conversionMode" value="zx80"
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeZX80Basic" class="ml-2 text-gray-700 text-lg font-medium">Sinclair ZX80 Basic</label>
+            </div>
             <div id="charset" class="flex items-center">
                 <input type="checkbox" id="charsetToggle" class="form-checkbox h-5 w-5 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">SHARP lowercase</label>
             </div>
-            <div class="col-span-full">
+            <div id="mzbyte0" class="col-span-full">
                         <p>Byte 0 of Hex Dump is the 
                 <a href="https://sharpmz.no/original/filetypes.htm" class="text-blue-600 hover:underline">file type</a>.
             </p>
@@ -143,6 +148,7 @@
         const modeSP = document.getElementById('modeSP');
         const mode1Z = document.getElementById('mode1Z');
         const modeZ80 = document.getElementById('modeZ80');
+        const modeZX80Basic = document.getElementById('modeZX80Basic');
         const modeDump = document.getElementById('modeDump');
         const messageParagraph = document.getElementById('message');
         const useAltParagraph = document.getElementById('useAlt');
@@ -151,6 +157,12 @@
         const charsetToggle = document.getElementById('charsetToggle');
         const fileInputSection = fileInput.closest('div'); // The file upload section container
         const outputTypeSpan = document.getElementById('outputType');
+        const titleElement = document.getElementById('title');
+        const divSA = document.getElementById('divSA');
+        const divSP = document.getElementById('divSP');
+        const div1Z = document.getElementById('div1Z');
+        const divZ80 = document.getElementById('divZ80');
+        const mzbyte0 = document.getElementById('mzbyte0');
 
         // Initialize fileData and fileName
 
@@ -176,10 +188,28 @@
             else if (modeParam === '1Z') mode1Z.checked = true;
             else if (modeParam === 'Z80') modeZ80.checked = true;   
             else if (modeParam === 'DUMP') modeDump.checked = true;
+            else if (modeParam === 'ZX80BASIC') modeZX80Basic.checked = true;
             else modeDump.checked = true; // Default to DUMP if invalid mode
         } else {
             modeSP.checked = true; // Default to SP if no mode specified
         }
+
+         // Get the current URL
+        const currentURL = window.location.href;
+
+        // Check if the URL starts with 'zxviewer'
+        if (currentURL.startsWith('zxviewer')) {
+            titleElement.textContent = 'Sinclair ZX File Viewer';
+            divSA.classList.add('hidden');
+            divSP.classList.add('hidden');
+            div1Z.classList.add('hidden');
+            mzbyte0.classList.add('hidden');
+        } 
+        // Check if the URL starts with 'mzfviewer'
+        else //if (currentURL.startsWith('mzfviewer')) 
+        {
+            divZX80.classList.add('hidden');
+        } 
 
         // Initialize the WASM module. This must be called before using any WASM functions.
         init().then(() => {
@@ -187,7 +217,7 @@
 
             processFile = () => {
 
-                if (modeDump.checked || modeZ80.checked) {
+                if(divZX80.classList.contains('hidden') && (modeDump.checked || modeZ80.checked)) {
                     charset.classList.remove('hidden');
                 }
                 else {
@@ -213,6 +243,7 @@
                 else if (mode1Z.checked) mode = '1Z';
                 else if (modeZ80.checked) mode = 'Z80';
                 else if (modeDump.checked) mode = 'DUMP';
+                else if (modeZX80Basic.checked) mode = 'ZX80BASIC';
                 else mode = 'SA';
 
                 
@@ -361,6 +392,7 @@
             mode1Z.addEventListener('change', () => processFile && processFile());
             modeZ80.addEventListener('change', () => processFile && processFile());
             modeDump.addEventListener('change', () => processFile && processFile());
+            modeZX80Basic.addEventListener('change', () => processFile && processFile());
             charsetToggle.addEventListener('change', () => processFile && processFile());
             
             // Event listener for the Save button

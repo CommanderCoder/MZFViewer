@@ -2,6 +2,8 @@
 
 mod z80_disasm;
 use z80_disasm::Z80Disassembler;
+mod zx80_decoder;
+
 
 use wasm_bindgen::prelude::*;
 use std::collections::HashMap;
@@ -72,6 +74,7 @@ enum MZFEncoding {
     V1Z013B, // 1Z-013B BASIC version
     Z80,     // Z80 disassembly
     DUMP,    // Hexadecimal output
+    ZX80BASIC, // Sinclair ZX80 Basic
 }
 
 
@@ -353,11 +356,12 @@ pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
         "1Z" => MZFEncoding::V1Z013B, // 1Z for 1Z-013B detokenization
         "Z80" => MZFEncoding::Z80,     // Z80 for Z80 disassembly
         "DUMP" => MZFEncoding::DUMP,     // DUMP for hexadecimal & ASCII output
+        "ZX80BASIC" => MZFEncoding::ZX80BASIC,     // ZX80BASIC for Sinclair ZX80 Basic output
         _ => return "Error: Invalid mode specified. Expected (SA, SP, 1Z, Z80, DUMP)".to_string(),
     };
 
     let detokenizer = MZDetokenizer::new(version);
-
+    
     if version == MZFEncoding::Z80 {
         let skip_bytes = 128; // No bytes to skip for Z80 disassembly
         let start_address = u16::from_le_bytes([data[0x14], data[0x15]]); // default start address is found at bytes 0x14,0x15 (LE)
@@ -403,8 +407,14 @@ pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
 
                 hex_output.push_str(&format!(" | {}", text_part));
             }
-        }
+        } 
         hex_output 
+    } else if version == MZFEncoding::ZX80BASIC {
+        // Attempt to detokenize the BASIC code.
+        match zx80_decoder::decode_zx80_bytes(data, false) {
+            Ok(basic_listing) => basic_listing,
+            Err(e) => format!("Error detokenizing file: {}", e),
+        }
     } else {
         // Attempt to detokenize the BASIC code.
         match detokenizer.detokenise_basic(data) {
