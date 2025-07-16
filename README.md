@@ -38,3 +38,8 @@ You need [rustup](https://www.rust-lang.org/tools/install) and [wasm-pack](https
 . `wasm-pack build --target web --out-dir public/pkg && cp index.html public/index.html`
 
 . `http-server public`
+
+
+### Finally this does a good release of HTML and JS code and starts the sinclair target
+
+`wasm-pack build --target web --out-dir public/pkg && cp s*.html public/ && cp *.js public/ && firebase emulators:start --only hosting:sinclair`

@@ -13,17 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      - run: (wasm-pack build --target web --out-dir public/pkg && cp index.html public/index.html)
+      - run: (wasm-pack build --target web --out-dir public/pkg && cp s*.html s*.js public)
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MZFVIEWER }}
           channelId: live
           projectId: mzfviewer
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MZFVIEWER }}
-          channelId: live
-          projectId: zxviewer
 

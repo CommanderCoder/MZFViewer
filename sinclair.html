@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinclair ZX File Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and rounded corners */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 900px;
+        }
+        .rounded-lg {
+            border-radius: 0.5rem; /* Consistent rounded corners */
+        }
+        pre {
+            white-space: pre-wrap; /* Ensures long lines wrap */
+            word-break: break-all; /* Breaks words if necessary */
+        }
+    </style>
+   <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
+ // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyB77wcoXIGjhXVUB2cR_OoQu7I0Tjopp8A",
+    authDomain: "mzfviewer.firebaseapp.com",
+    projectId: "mzfviewer",
+    storageBucket: "mzfviewer.firebasestorage.app",
+    messagingSenderId: "879385811385",
+    appId: "1:879385811385:web:67ecc8481503e7ec553e68",
+// zxviewer
+//     measurementId: "G-DCBZECWCK1" // ZX Viewer measurement ID
+  };
+  
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="container bg-white shadow-xl rounded-lg p-8 space-y-6">
+        <h1 id="title" class="text-3xl font-bold text-center text-gray-800 mb-6">Sinclair ZX File Viewer</h1>
+<h4 class="text-center">by <a class="text-blue-600 hover:underline mt-2" href="https://commandercoder.com/">Commander Coder</a></h4>        <div class="flex flex-col items-center p-4 border border-gray-300 rounded-lg bg-gray-50">
+            <label for="fileInput" class="block text-lg font-medium text-gray-700 mb-3">Upload a Binary File:</label>
+            <input type="file" id="fileInput" class="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100 cursor-pointer"
+            />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+            <div class="col-span-full">
+                <p id="useAlt" class="text-lg text-gray-800 mb-3">Try other versions of BASIC, Z80 or Hex using these.</p>
+            </div>
+            <div id="divSA" class="flex items-center hidden">
+                <input type="radio" id="modeSA" name="conversionMode" value="hex"
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeSA" class="ml-2 text-gray-700 text-lg font-medium">SA-5510 Detokenizer</label>
+            </div>
+            <div id="divSP" class="flex items-center hidden">
+                <input type="radio" id="modeSP" name="conversionMode" value="ascii"
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeSP" class="ml-2 text-gray-700 text-lg font-medium">SP-5025 Detokenizer</label>
+            </div>
+            <div id="div1Z" class="flex items-center hidden">
+                <input type="radio" id="mode1Z" name="conversionMode" value="ascii"
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="mode1Z" class="ml-2 text-gray-700 text-lg font-medium">1Z-013B Detokenizer</label>
+            </div>
+            <div class="flex items-center">
+                <input type="radio" id="modeZ80" name="conversionMode" value="z80"
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeZ80" class="ml-2 text-gray-700 text-lg font-medium">Z80 Disassembly</label>
+            </div>
+            <div class="flex items-center">
+                <input type="radio" id="modeDump" name="conversionMode" value="dump"
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeDump" class="ml-2 text-gray-700 text-lg font-medium">Hex Dump</label>
+            </div>
+            <div id="divZX80" class="flex items-center">
+                <input type="radio" id="modeZX80Basic" name="conversionMode" value="zx80" checked
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeZX80Basic" class="ml-2 text-gray-700 text-lg font-medium">Sinclair ZX80 Basic</label>
+            </div>
+            <div id="charset" class="flex items-center">
+                <input type="checkbox" id="charsetToggle" class="form-checkbox h-5 w-5 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">ZX ASCII</label>
+            </div>
+            <div id="mzbyte0" class="col-span-full hidden">
+                        <p>Byte 0 of Hex Dump is the 
+                <a href="https://sharpmz.no/original/filetypes.htm" class="text-blue-600 hover:underline">file type</a>.
+            </p>
+            <p id="outputType"></p>
+            </div>
+        </div>
+
+        <div class="p-6 border border-gray-300 rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
+            <p id="message" class="text-red-600 text-sm mt-2 hidden">Please upload a file.</p>
+            <pre id="output" class="text-gray-900 text-sm bg-white p-4 rounded-md border border-gray-200"></pre>
+        </div>
+
+        <div class="flex justify-center mt-6">
+            <button id="saveButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full
+                                          shadow-lg transition duration-300 ease-in-out transform hover:scale-105
+                                          focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75
+                                          disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                Save Output
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script type="module" src="./script.js"></script>
+    <script type="module">
+        // Set default mode for ZX viewer
+        const modeZX80Basic = document.getElementById('modeZX80Basic');
+        modeZX80Basic.checked = true;
+    </script>
+</body>
+</html>

@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "mzfviewer"
-  }
+  },
+  "targets": {
+    "mzfviewer": {
+      "hosting": {
+        "sharp": [
+          "mzfviewer"
+        ],
+        "sinclair": [
+          "zxviewer"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
