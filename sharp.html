@@ -6,10 +6,16 @@
     <title>Sharp MZF File Viewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @font-face {
+            font-family: 'SharpMZ-Style';
+            src: url('sharp/SharpMZProMono.ttf'); /* woff might be better */
+            font-weight: normal;
+            font-style: normal;
+        }
         /* Custom styles for the Inter font and rounded corners */
         body {
             font-family: "Inter", sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f3f4f6; /* Light grey background */
         }
         .container {
             max-width: 900px;
@@ -17,10 +23,13 @@
         .rounded-lg {
             border-radius: 0.5rem; /* Consistent rounded corners */
         }
-        pre {
+        .char-font {
             white-space: pre-wrap; /* Ensures long lines wrap */
             word-break: break-all; /* Breaks words if necessary */
+            font-family: 'SharpMZ-Style', 'Courier New', Courier, monospace;
+            font-size: 8pt;
         }
+        
     </style>
    <script type="module">
   // Import the functions you need from the SDKs you need
@@ -38,7 +47,6 @@
     storageBucket: "mzfviewer.firebasestorage.app",
     messagingSenderId: "879385811385",
     appId: "1:879385811385:web:67ecc8481503e7ec553e68",
-// mzfviwer
     measurementId: "G-44S7LF0WFF"
   };
   
@@ -90,14 +98,9 @@
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeDump" class="ml-2 text-gray-700 text-lg font-medium">Hex Dump</label>
             </div>
-            <div id="divZX80" class="flex items-center hidden">
-                <input type="radio" id="modeZX80Basic" name="conversionMode" value="zx80"
-                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="modeZX80Basic" class="ml-2 text-gray-700 text-lg font-medium">Sinclair ZX80 Basic</label>
-            </div>
             <div id="charset" class="flex items-center">
                 <input type="checkbox" id="charsetToggle" class="form-checkbox h-5 w-5 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">SHARP lowercase</label>
+                <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">ASCII charset</label>
             </div>
             <div id="mzbyte0" class="col-span-full">
                         <p>Byte 0 of Hex Dump is the 
@@ -109,7 +112,10 @@
 
         <div class="p-6 border border-gray-300 rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
             <p id="message" class="text-red-600 text-sm mt-2 hidden">Please upload a file.</p>
-            <pre id="output" class="text-gray-900 text-sm bg-white p-4 rounded-md border border-gray-200"></pre>
+            <div class=" char-font"> 
+                <!-- text-sm  -->
+            <div id="output" class="text-gray-900 bg-white p-4 rounded-md border border-gray-200"></div>
+            </div>
         </div>
 
         <div class="flex justify-center mt-6">

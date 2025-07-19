@@ -6,22 +6,57 @@
     <title>Sinclair ZX File Viewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @font-face {
+            font-family: 'ZX81-Style';
+            src: url('zx81/zx81.ttf'); /* woff might be better */
+            font-weight: normal;
+            font-style: normal;
+        }
+
         /* Custom styles for the Inter font and rounded corners */
         body {
             font-family: "Inter", sans-serif;
             background-color: #f3f4f6; /* Light gray background */
         }
+
+        
         .container {
             max-width: 900px;
         }
         .rounded-lg {
             border-radius: 0.5rem; /* Consistent rounded corners */
         }
-        pre {
-            white-space: pre-wrap; /* Ensures long lines wrap */
-            word-break: break-all; /* Breaks words if necessary */
+
+        .char-font {
+            font-family: 'ZX81-Style', 'Courier New', Courier, monospace;
+            white-space: pre-wrap; /* Ensures long lines wrap */            /* word-break: break-all; Breaks words if necessary */
+            font-size: 8pt;
         }
-    </style>
+
+        .char-box {
+            display: inline-block; /* can set width and height now */
+            /* border: 1px solid lightgray; */
+            /* border-radius: 4px; */
+            padding: 2px 0px;
+            /* margin: 2px; */
+            min-width: 0.6em; /* ensure monospaced width */
+            text-align: center; /* centre within the box */
+            box-sizing: border-box; /* include padding and border in sizes */
+        }
+
+        /* Styling for inverse characters */
+        .inv-char {
+            background-color: black;
+            color: white;
+            display: inline-block;
+        }
+        /* Styling for direct characters */
+        .dir-char {
+            background-color: white;
+            color: black;
+        }
+
+        </style>
    <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -38,8 +73,7 @@
     storageBucket: "mzfviewer.firebasestorage.app",
     messagingSenderId: "879385811385",
     appId: "1:879385811385:web:67ecc8481503e7ec553e68",
-// zxviewer
-//     measurementId: "G-DCBZECWCK1" // ZX Viewer measurement ID
+    measurementId: "G-DCBZECWCK1" // ZX Viewer measurement ID
   };
   
   // Initialize Firebase
@@ -65,21 +99,6 @@
             <div class="col-span-full">
                 <p id="useAlt" class="text-lg text-gray-800 mb-3">Try other versions of BASIC, Z80 or Hex using these.</p>
             </div>
-            <div id="divSA" class="flex items-center hidden">
-                <input type="radio" id="modeSA" name="conversionMode" value="hex"
-                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="modeSA" class="ml-2 text-gray-700 text-lg font-medium">SA-5510 Detokenizer</label>
-            </div>
-            <div id="divSP" class="flex items-center hidden">
-                <input type="radio" id="modeSP" name="conversionMode" value="ascii"
-                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="modeSP" class="ml-2 text-gray-700 text-lg font-medium">SP-5025 Detokenizer</label>
-            </div>
-            <div id="div1Z" class="flex items-center hidden">
-                <input type="radio" id="mode1Z" name="conversionMode" value="ascii"
-                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="mode1Z" class="ml-2 text-gray-700 text-lg font-medium">1Z-013B Detokenizer</label>
-            </div>
             <div class="flex items-center">
                 <input type="radio" id="modeZ80" name="conversionMode" value="z80"
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
@@ -95,21 +114,23 @@
                     class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
                 <label for="modeZX80Basic" class="ml-2 text-gray-700 text-lg font-medium">Sinclair ZX80 Basic</label>
             </div>
+            <div id="divZX81" class="flex items-center">
+                <input type="radio" id="modeZX81Basic" name="conversionMode" value="zx81" checked
+                    class="form-radio h-5 w-4 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
+                <label for="modeZX81Basic" class="ml-2 text-gray-700 text-lg font-medium">Sinclair ZX81 Basic</label>
+            </div>
             <div id="charset" class="flex items-center">
                 <input type="checkbox" id="charsetToggle" class="form-checkbox h-5 w-5 text-blue-600 cursor-pointer transition duration-150 ease-in-out">
-                <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">ZX ASCII</label>
+                <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">ASCII charset</label>
             </div>
-            <div id="mzbyte0" class="col-span-full hidden">
-                        <p>Byte 0 of Hex Dump is the 
-                <a href="https://sharpmz.no/original/filetypes.htm" class="text-blue-600 hover:underline">file type</a>.
-            </p>
+            <div>
             <p id="outputType"></p>
             </div>
         </div>
 
         <div class="p-6 border border-gray-300 rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
             <p id="message" class="text-red-600 text-sm mt-2 hidden">Please upload a file.</p>
-            <pre id="output" class="text-gray-900 text-sm bg-white p-4 rounded-md border border-gray-200"></pre>
+            <pre class="text-gray-900 text-sm bg-white p-4 rounded-md border border-gray-200"><div id="output" class="char-font"></div></pre>
         </div>
 
         <div class="flex justify-center mt-6">
@@ -127,8 +148,8 @@
     <script type="module" src="./script.js"></script>
     <script type="module">
         // Set default mode for ZX viewer
-        const modeZX80Basic = document.getElementById('modeZX80Basic');
-        modeZX80Basic.checked = true;
+        const defaultbasic = document.getElementById('modeZX81Basic');
+        defaultbasic.checked = true;
     </script>
 </body>
 </html>

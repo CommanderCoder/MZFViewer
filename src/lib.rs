@@ -3,6 +3,7 @@
 mod z80_disasm;
 use z80_disasm::Z80Disassembler;
 mod zx80_decoder;
+mod zx81_decoder;
 
 
 use wasm_bindgen::prelude::*;
@@ -75,8 +76,14 @@ enum MZFEncoding {
     Z80,     // Z80 disassembly
     DUMP,    // Hexadecimal output
     ZX80BASIC, // Sinclair ZX80 Basic
+    ZX81BASIC, // Sinclair ZX81 Basic
 }
 
+#[wasm_bindgen]
+pub enum MZFMachine {
+    Sharp,
+    Sinclair,
+}
 
 /// Struct responsible for detokenizing MZ-series BASIC code.
 struct MZDetokenizer {
@@ -343,12 +350,14 @@ impl MZDetokenizer {
 /// * `mode` - A string indicating the desired BASIC version for detokenization:
 ///            "hex" for SA-5510 (hexadecimal output from detokenizer, but detokenizer uses SA-5510 rules).
 ///            "ascii" for SP-5025 (ASCII output from detokenizer, but detokenizer uses SP-5025 rules).
-/// * `charsetFlag` - A boolean indicating whether to use the SHARP character set for detokenization.
+/// * `machine` : type of machine to process binary
+/// * `charset_flag` - A boolean indicating whether to use the ASCII character set for detokenization.
 ///
 /// # Returns
 /// A `String` containing the detokenized BASIC listing or an error message.
+/// This needs to be safe HTML as it will be interpreted by browser for INV and Special characters
 #[wasm_bindgen]
-pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
+pub fn process_binary(data: &[u8], mode: String, machine: MZFMachine, charset_flag: bool) -> String {
     // Determine the BASIC version based on the selected mode.
     let version = match mode.as_str() {
         "SA" => MZFEncoding::SA5510, // SA for SA-5510 detokenization
@@ -357,25 +366,28 @@ pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
         "Z80" => MZFEncoding::Z80,     // Z80 for Z80 disassembly
         "DUMP" => MZFEncoding::DUMP,     // DUMP for hexadecimal & ASCII output
         "ZX80BASIC" => MZFEncoding::ZX80BASIC,     // ZX80BASIC for Sinclair ZX80 Basic output
+        "ZX81BASIC" => MZFEncoding::ZX81BASIC,     // ZX81BASIC for Sinclair ZX81 Basic output
         _ => return "Error: Invalid mode specified. Expected (SA, SP, 1Z, Z80, DUMP)".to_string(),
     };
 
     let detokenizer = MZDetokenizer::new(version);
     
     if version == MZFEncoding::Z80 {
-        let skip_bytes = 128; // No bytes to skip for Z80 disassembly
-        let start_address = u16::from_le_bytes([data[0x14], data[0x15]]); // default start address is found at bytes 0x14,0x15 (LE)
-        let exec_address = u16::from_le_bytes([data[0x16], data[0x17]]); // default exec address is found at bytes 0x16,0x17 (LE)
+
+        let (skip_bytes, start_address, exec_address) = match machine {
+            MZFMachine::Sharp => (128,
+                u16::from_le_bytes([data[0x14], data[0x15]]), // default start address is found at bytes 0x14,0x15 (LE)
+                u16::from_le_bytes([data[0x16], data[0x17]]), // default exec address is found at bytes 0x16,0x17 (LE)
+            ),
+            MZFMachine::Sinclair => (0,0,0)
+        }; //z80 addresses
 
         // Disassemble
         let mut disasm = Z80Disassembler::new(detokenizer);
         let result = disasm.disassemble(&data[skip_bytes..], start_address, exec_address, charset_flag);
 
-        // If the mode is Z80, disassemble the Z80 code.
-        result.into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<String>>()
-            .join("\n")
+        result.join("\n")
+
     } else if version == MZFEncoding::DUMP {
         // If the mode is DUMP, return the hexadecimal and ASCII representation of the data.
         let mut hex_output = String::new();
@@ -392,15 +404,24 @@ pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
                 .iter()
                 .map(|&b| { 
                     if b >= 32 && b < 127 {
+                        // If 'b' is a standard ASCII printable character, use it directly.
                         b as char
                     } else if charset_flag {
-                        if let Some(&ch) = detokenizer.sharp_ascii.get(&b) {
-                            ch
-                        } else {
-                            '.'
-                        }
-                    } else {
+                        // If 'charset_flag' is true, and 'b' isn't printable ASCII, default to a full-stop.
                         '.'
+                    } else {
+                        // Otherwise (charset_flag is false, and 'b' isn't printable ASCII),
+                        // use the machine-specific character set.
+                        match machine {
+                            MZFMachine::Sharp => {
+                                if let Some(&ch) = detokenizer.sharp_ascii.get(&b) {
+                                    ch
+                                } else {
+                                    '.'
+                                }
+                            }
+                            MZFMachine::Sinclair => b as char,
+                        }
                     }
                 })
                 .collect();
@@ -412,6 +433,11 @@ pub fn process_binary(data: &[u8], mode: String, charset_flag: bool) -> String {
     } else if version == MZFEncoding::ZX80BASIC {
         // Attempt to detokenize the BASIC code.
         match zx80_decoder::decode_zx80_bytes(data, false) {
+            Ok(basic_listing) => basic_listing,
+            Err(e) => format!("Error detokenizing file: {}", e),
+        }
+    } else if version == MZFEncoding::ZX81BASIC {
+        match zx81_decoder::decode_zx81_bytes(data) {
             Ok(basic_listing) => basic_listing,
             Err(e) => format!("Error detokenizing file: {}", e),
         }
