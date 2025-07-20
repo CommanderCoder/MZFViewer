@@ -386,16 +386,19 @@ pub fn process_binary(data: &[u8], mode: String, machine: MZFMachine, charset_fl
         let mut disasm = Z80Disassembler::new(detokenizer);
         let result = disasm.disassemble(&data[skip_bytes..], start_address, exec_address, charset_flag);
 
-        result.join("\n")
+        let z80_output = result.join("\n");
 
+        z80_output
     } else if version == MZFEncoding::DUMP {
         // If the mode is DUMP, return the hexadecimal and ASCII representation of the data.
         let mut hex_output = String::new();
         for (i, byte) in data.iter().enumerate() {
+            // each line has 16 bytes
             if i % 16 == 0 {
                 if i > 0 {
                     hex_output.push_str("\n");
                 }
+                // current location in dump (every 16 bytes)
                 hex_output.push_str(&format!("{:04X}: ", i));
             }
             hex_output.push_str(&format!("{:02X} ", byte));
@@ -420,7 +423,8 @@ pub fn process_binary(data: &[u8], mode: String, machine: MZFMachine, charset_fl
                                     '.'
                                 }
                             }
-                            MZFMachine::Sinclair => b as char,
+                            MZFMachine::Sinclair => '_'
+                            
                         }
                     }
                 })

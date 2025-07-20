@@ -8,7 +8,7 @@
     "clean": "rm -rf public/pkg public/*.html public/*.js public/zx81",
     "build:wasm": "wasm-pack build --target web --out-dir public/pkg",
     "copy:assets": "cp s*.html public/ && cp *.js public/ && cp -r zx81/ public/zx81 && cp -r sharp/ public/sharp",
-    "serve:firebase": "firebase emulators:start --only hosting:sharp",
+    "serve:firebase": "firebase emulators:start --only hosting:sinclair",
     "dev": "npm run clean && npm run build:wasm && npm run copy:assets && npm run serve:firebase",
     "build": "npm run clean && npm run build:wasm && npm run copy:assets"
   },

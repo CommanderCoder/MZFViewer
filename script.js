@@ -147,10 +147,7 @@ init().then(() => {
             while (i < result.length) {
                 const char = result[i];
 
-                if (char === '\n') {
-                    htmlParts.push('<br>');
-                    i++;
-                } else if (char === '§') {
+                if (char === '§') {
                     // Find closing § using indexOf from current position
                     const startIndex = i + 1;
                     const endIndex = result.indexOf('§', startIndex);
@@ -168,7 +165,7 @@ init().then(() => {
                 } else {
                     // Batch normal characters together
                     let normalStart = i;
-                    while (i < result.length && result[i] !== '\n' && result[i] !== '§') {
+                    while (i < result.length && result[i] !== '§') {
                         i++;
                     }
                     
