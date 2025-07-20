@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharp MZF File Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @font-face {
+            font-family: 'SharpMZ-Style';
+            src: url('sharp/SharpMZProMono.ttf'); /* woff might be better */
+            font-weight: normal;
+            font-style: normal;
+        }
+        /* Custom styles for the Inter font and rounded corners */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6; /* Light grey background */
+        }
+        .container {
+            max-width: 900px;
+        }
+        .rounded-lg {
+            border-radius: 0.5rem; /* Consistent rounded corners */
+        }
+        .char-font {
+            white-space: pre-wrap; /* Ensures long lines wrap */
+            word-break: break-all; /* Breaks words if necessary */
+            font-family: 'SharpMZ-Style', 'Courier New', Courier, monospace;
+            font-size: 8pt;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="char-font">
+        TESTING
+    </div></body>
+</html>

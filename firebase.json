@@ -10,8 +10,8 @@
       ],
       "rewrites": [
         {
-          "source": "sharp/**",
-          "destination": "sharp/**"
+          "source": "/sharp/**",
+          "destination": "/sharp/**"
         },
         {
           "source": "**",
@@ -29,8 +29,8 @@
       ],
       "rewrites": [
         {
-          "source": "zx81/**",
-          "destination": "zx81/**"
+          "source": "/zx81/**",
+          "destination": "/zx81/**"
         },
         {
           "source": "**",
