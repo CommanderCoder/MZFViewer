@@ -10,6 +10,10 @@
       ],
       "rewrites": [
         {
+          "source": "sharp/**",
+          "destination": "sharp/**"
+        },
+        {
           "source": "**",
           "destination": "/sharp.html"
         }
@@ -24,6 +28,10 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "zx81/**",
+          "destination": "zx81/**"
+        },
         {
           "source": "**",
           "destination": "/sinclair.html"
