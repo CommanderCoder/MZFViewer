@@ -33,13 +33,29 @@ One last task, and another 20 minutes with CoPilot, and we have a ascii/hex dump
 
 # Build Instructions
 
-You need [rustup](https://www.rust-lang.org/tools/install) and [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) and [http-server](https://www.npmjs.com/package/http-server).
+. You need [rustup](https://www.rust-lang.org/tools/install).
 
-. `wasm-pack build --target web --out-dir public/pkg && cp index.html public/index.html`
+. `cargo install wasm-pack` 
 
-. `http-server public`
-
+. `npm install`
 
 ### Finally this does a good release of HTML and JS code and starts the sinclair target
 
-`npm run dev`
+`npm run dev --target=sinclair`
+
+
+### Alternative
+
+You can try [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) {doesn't work on my Mac} and [http-server](https://www.npmjs.com/package/http-server) {rather than the firebase emulators.}
+
+. `wasm-pack build --target web --out-dir public/pkg 
+
+. `cp s*.html public/ && cp *.js public/ && cp -r sinclair/ public/sinclair && cp -r sharp/ public/sharp`
+
+. `http-server public`
+
+### Firebase
+
+You could also install firebase-tools globally.
+
+. `npm install -g firebase-tools`

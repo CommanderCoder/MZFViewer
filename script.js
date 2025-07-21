@@ -195,11 +195,15 @@ init().then(() => {
             try {
                 const zip = await JSZip.loadAsync(arrayBuffer);
                 let targetFile = null;
-                let fileExtension = /\.mzf$/i;
+               let fileExtension; // Declare it without initial assignment
 
                 // Determine target file extension based on current viewer (MZF or ZX)
-                if (titleElement && titleElement.textContent === 'Sinclair ZX File Viewer') {
-                    fileExtension = /\.tap$/i; // Assuming .tap for ZX files
+                if (machine === MZFMachine.Sinclair) {
+                    // For Sinclair, match .tap, .p, or .80
+                    fileExtension = /\.(tap|p|80)$/i; 
+                } else {
+                    // For other machines (presumably MZF), match .mzf
+                    fileExtension = /\.mzf$/i; 
                 }
 
                 zip.forEach((relativePath, zipEntry) => {
@@ -266,12 +270,16 @@ init().then(() => {
                         try {
                             const zip = await JSZip.loadAsync(e.target.result);
                             let targetFile = null;
-                            let fileExtension = /\.mzf$/i;
+               let fileExtension; // Declare it without initial assignment
 
-                            // Determine target file extension based on current viewer (MZF or ZX)
-                            if (titleElement && titleElement.textContent === 'Sinclair ZX File Viewer') {
-                                fileExtension = /\.tap$/i; // Assuming .tap for ZX files
-                            }
+                // Determine target file extension based on current viewer (MZF or ZX)
+                if (machine === MZFMachine.Sinclair) {
+                    // For Sinclair, match .tap, .p, or .80
+                    fileExtension = /\.(tap|p|80)$/i; 
+                } else {
+                    // For other machines (presumably MZF), match .mzf
+                    fileExtension = /\.mzf$/i; 
+                }
 
                             zip.forEach((relativePath, zipEntry) => {
                                 if (!targetFile && fileExtension.test(zipEntry.name)) {
