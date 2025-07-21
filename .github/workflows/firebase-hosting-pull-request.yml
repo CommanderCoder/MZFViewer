@@ -15,7 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      - run: (wasm-pack build --target web --out-dir public/pkg && cp s*.html s*.js public)
+      - run: wasm-pack build --target web --out-dir public/pkg
+      - run: cp s*.html public/ && cp *.js public/ && cp -r sinclair/ public/sinclair && cp -r sharp/ public/sharp
+      - run: npx @tailwindcss/cli -i ./sinclair.css -o ./public/sinclair/styles.css && npx @tailwindcss/cli -i ./sharp.css -o ./public/sharp/styles.css
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
