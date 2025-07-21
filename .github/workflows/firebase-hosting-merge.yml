@@ -14,7 +14,7 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Install tailwindcss
-        run: npm install -g @tailwindcss/cli
+        run: npm install -g tailwindcss @tailwindcss/cli
       - name: Build WebAssembly package
         run: wasm-pack build --target web --out-dir public/pkg
       - run: cp s*.html public/ && cp *.js public/ && cp -r sinclair/ public/sinclair && cp -r sharp/ public/sharp
