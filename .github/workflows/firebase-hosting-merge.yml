@@ -34,8 +34,8 @@ jobs:
         run: |
           cp s*.html public/
           cp *.js public/
-          cp -r sinclair/ public/sinclair/
-          cp -r sharp/ public/sharp/
+          cp -r sinclair/*.* public/sinclair/
+          cp -r sharp/*.* public/sharp/
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
