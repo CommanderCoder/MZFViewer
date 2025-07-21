@@ -5,11 +5,13 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rm -rf public/pkg public/*.html public/*.js public/zx81",
+    "clean": "rm -rf public/pkg public/*.html public/*.js public/sinclair public/sharp",
     "build:wasm": "wasm-pack build --target web --out-dir public/pkg",
-    "copy:assets": "cp s*.html public/ && cp *.js public/ && cp -r zx81/ public/zx81 && cp -r sharp/ public/sharp",
-    "serve:firebase": "firebase emulators:start --only hosting:sinclair",
-    "dev": "npm run clean && npm run build:wasm && npm run copy:assets && npm run serve:firebase",
+    "copy:assets": "cp s*.html public/ && cp *.js public/ && cp -r sinclair/ public/sinclair && cp -r sharp/ public/sharp",
+    "serve:firebase": "firebase emulators:start --only hosting:$npm_config_target",
+    "build:css": "npx @tailwindcss/cli -i ./sinclair.css -o ./public/sinclair/styles.css && npx @tailwindcss/cli -i ./sharp.css -o ./public/sharp/styles.css",
+    "watch:css": "npx @tailwindcss/cli -i ./sinclair.css -o ./public/sinclair/styles.css --watch & npx @tailwindcss/cli -i ./sharp.css -o ./public/sharp/styles.css --watch",
+    "dev": "npm run clean && npm run build:wasm && npm run copy:assets && npm run build:css && npm run serve:firebase",
     "build": "npm run clean && npm run build:wasm && npm run copy:assets"
   },
   "repository": {
@@ -24,7 +26,11 @@
   },
   "homepage": "https://github.com/CommanderCoder/MZFViewer#readme",
   "devDependencies": {
-    "wasm-pack": "^0.12.0",
-    "firebase-tools": "^13.0.0"
+    "firebase-tools": "^13.0.0",
+    "tailwindcss": "^4.1.11",
+    "wasm-pack": "^0.0.0"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.11"
   }
 }

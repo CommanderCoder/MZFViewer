@@ -29,8 +29,8 @@
       ],
       "rewrites": [
         {
-          "source": "/zx81/**",
-          "destination": "/zx81/**"
+          "source": "/sinclair/**",
+          "destination": "/sinclair/**"
         },
         {
           "source": "**",
