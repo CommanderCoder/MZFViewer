@@ -11,18 +11,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Setup Node.js for npm commands (Tailwind CSS)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      - name: Install tailwindcss
-        run: npm install -g tailwindcss @tailwindcss/cli
-      - name: Build WebAssembly package
+
+      - name: Build wasm
         run: wasm-pack build --target web --out-dir public/pkg
-      - run: cp s*.html public/ && cp *.js public/ && cp -r sinclair/ public/sinclair && cp -r sharp/ public/sharp
-      - run: npx @tailwindcss/cli -i ./sinclair.css -o ./public/sinclair/styles.css && npx @tailwindcss/cli -i ./sharp.css -o ./public/sharp/styles.css
+
+      - name: Install tailwindcss
+        run: npm install tailwindcss @tailwindcss/cli
+
+      - name: Build Tailwind CSS
+        run: npx @tailwindcss/cli -i ./sinclair.css -o ./public/sinclair/styles.css && npx @tailwindcss/cli -i ./sharp.css -o ./public/sharp/styles.css
+
+      - name: Copy static files and directories
+        run: |
+          cp s*.html public/
+          cp *.js public/
+          cp -r sinclair/ public/sinclair
+          cp -r sharp/ public/sharp
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MZFVIEWER }}
           channelId: live
           projectId: mzfviewer
-
