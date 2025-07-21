@@ -6,6 +6,10 @@
     <title>Sinclair ZX File Viewer</title>
     <link href="/sinclair/styles.css" rel="stylesheet">
     <style>
+        
+        /* symbols for legacy computing font */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap');
+
         @font-face {
             font-family: 'ZX81-Style';
             src: url('sinclair/zx81.ttf'); /* woff might be better */
@@ -18,8 +22,7 @@
             font-family: "Inter", sans-serif;
             background-color: #f3f4f6; /* Light gray background */
         }
-
-        
+      
         .container {
             max-width: 900px;
         }
@@ -28,9 +31,9 @@
         }
 
         .char-font {
-            font-family: 'ZX81-Style', 'Courier New', Courier, monospace;
+            font-family: 'ZX81-Style',  'Noto Sans Symbols 2', 'Courier New', Courier, monospace;
             white-space: pre-wrap; /* Ensures long lines wrap */       
-                 /* word-break: break-all; Breaks words if necessary */
+            /* word-break: break-all; Breaks words if necessary */
             font-size: 8pt;
         }
 

@@ -131,7 +131,7 @@ init().then(() => {
             const result = process_binary(new Uint8Array(fileData), mode, machine, ascii_charset);
 
             // Pre-compile regex for better performance
-            const HTML_ESCAPE_REGEX = /[&<>]/g;
+            const HTML_ESCAPE_REGEX = /&(?!#x)|[<>]/g;
             const HTML_ESCAPE_MAP = {
                 '&': '&amp;',
                 '<': '&lt;',

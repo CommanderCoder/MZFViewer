@@ -1,18 +1,15 @@
 use std::char;
 
-use crate::MZDetokenizer;
-
 pub struct Z80Disassembler {
     pc: u16,
-    d: MZDetokenizer,
 }
 
 impl Z80Disassembler {
-    pub fn new(detokenizer: MZDetokenizer) -> Self {
-        Self { pc: 0, d: detokenizer }
+    pub fn new() -> Self {
+        Self { pc: 0 }
     }
 
-    pub fn disassemble(&mut self, data: &[u8], start_address: u16, exec_address: u16, charset_flag: bool) -> Vec<String> {
+    pub fn disassemble(&mut self, data: &[u8], start_address: u16, exec_address: u16) -> Vec<String> {
         let mut result = Vec::new();
         let mut pos = 0;
         self.pc = start_address;
@@ -31,11 +28,7 @@ impl Z80Disassembler {
             
             let ascii = instruction_bytes
                 .iter()
-                .map(|&b| if b.is_ascii_graphic() || b == b' ' { b as char } else if charset_flag {
-                        self.d.sharp_ascii.get(&b).copied().unwrap_or('.')
-                    } else {
-                        '.'
-                    })
+                .map(|&b| b as char)
                 .collect::<String>();
 
             // MODIFICATION: The formatting logic below was changed to match the target ASM file.
