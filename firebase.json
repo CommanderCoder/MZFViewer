@@ -9,6 +9,7 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+
         {
           "source": "/sharp/**",
           "destination": "/sharp/**"
@@ -16,7 +17,12 @@
         {
           "source": "**",
           "destination": "/sharp.html"
+        },
+        {
+          "source": "/files/**",
+          "destination": "/files/**"
         }
+
       ]
     },
     {
@@ -35,6 +41,10 @@
         {
           "source": "**",
           "destination": "/sinclair.html"
+        },
+        {
+          "source": "/files/**",
+          "destination": "/files/**"
         }
       ]
     }

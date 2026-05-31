@@ -25,6 +25,7 @@ const useAltParagraph = document.getElementById('useAlt');
 const saveButton = document.getElementById('saveButton');
 const charset = document.getElementById('charset');
 const charsetToggle = document.getElementById('charsetToggle');
+const baseaddNumber = document.getElementById('baseaddNumber');
 const charsetLabel = document.querySelector('label[for="charsetToggle"]');
 const fileInputSection = fileInput.closest('div'); // The file upload section container
 const outputTypeSpan = document.getElementById('outputType');
@@ -36,6 +37,7 @@ const divZ80 = document.getElementById('divZ80');
 const mzbyte0 = document.getElementById('mzbyte0');
 const divZX80 = document.getElementById('divZX80');
 
+const hexDisplayElement = document.getElementById('hexDisplay');
 
 const machine = modeSA ? MZFMachine.Sharp : MZFMachine.Sinclair; 
 
@@ -126,9 +128,31 @@ init().then(() => {
             }
         }
 
+        if (undefined != baseaddNumber)
+        {
+            // Parse the input value as an integer
+            const decimalValue = parseInt(baseaddNumber.value, 10);
+            
+            // Check if the input is a valid number
+            if (!isNaN(decimalValue)) {
+            // Convert to base-16 and make it uppercase for standard hex formatting
+                const hexValue = decimalValue.toString(16).toUpperCase();
+                hexDisplayElement.textContent = `(0${hexValue}H)`;
+                
+            } else {
+                hexDisplayElement.textContent = '(Invalid)';
+            }
+        }
+        else
+        {
+           
+        }
+           
+
         try {
             const ascii_charset = charsetToggle ? charsetToggle.checked : false;
-            const result = process_binary(new Uint8Array(fileData), mode, machine, ascii_charset);
+            const base_address = baseaddNumber ? parseInt(baseaddNumber.value) || 0 : 0;
+            const result = process_binary(new Uint8Array(fileData), mode, machine, ascii_charset, base_address);
 
             // Pre-compile regex for better performance
             const HTML_ESCAPE_REGEX = /&(?!#x)|[<>]/g;
@@ -229,7 +253,7 @@ init().then(() => {
             }
         };
 
-        fetch("https://corsproxy.io/?"+fileUrl)
+        fetch(fileUrl)
             .then(async response => {
                 if (!response.ok) throw new Error(`HTTP error ${response.status}`);
                 const arrayBuffer = await response.arrayBuffer();
@@ -270,50 +294,50 @@ init().then(() => {
                         try {
                             const zip = await JSZip.loadAsync(e.target.result);
                             let targetFile = null;
-               let fileExtension; // Declare it without initial assignment
+                    let fileExtension; // Declare it without initial assignment
 
-                // Determine target file extension based on current viewer (MZF or ZX)
-                if (machine === MZFMachine.Sinclair) {
-                    // For Sinclair, match .tap, .p, or .80
-                    fileExtension = /\.(tap|p|80)$/i; 
-                } else {
-                    // For other machines (presumably MZF), match .mzf
-                    fileExtension = /\.mzf$/i; 
-                }
+                    // Determine target file extension based on current viewer (MZF or ZX)
+                    if (machine === MZFMachine.Sinclair) {
+                        // For Sinclair, match .tap, .p, or .80
+                        fileExtension = /\.(tap|p|80)$/i; 
+                    } else {
+                        // For other machines (presumably MZF), match .mzf
+                        fileExtension = /\.mzf$/i; 
+                    }
 
-                            zip.forEach((relativePath, zipEntry) => {
-                                if (!targetFile && fileExtension.test(zipEntry.name)) {
-                                    targetFile = zipEntry;
-                                }
-                            });
-
-                            if (!targetFile) {
-                                outputPre.textContent = `Error: No ${fileExtension.source.replace(/\\|\^|\$/g, '')} file found in ZIP archive.`;
-                                fileData = null;
-                                toggleSaveButton();
-                                return;
+                    zip.forEach((relativePath, zipEntry) => {
+                            if (!targetFile && fileExtension.test(zipEntry.name)) {
+                                targetFile = zipEntry;
                             }
-                            // Extract as ArrayBuffer
-                            const targetBuffer = await targetFile.async('arraybuffer');
-                            fileData = targetBuffer;
-                            fileData.fileName = targetFile.name.replace(/\.[^/.]+$/, "");
-                            processFile();
-                        } catch (err) {
-                            outputPre.textContent = `Error: Failed to extract file from ZIP. ${err.message || err}`;
-                            fileData = null;
-                            toggleSaveButton();
-                        }
-                    };
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    // Handle normal file
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        fileData = e.target.result;
-                        fileData.fileName = file.name.replace(/\.[^/.]+$/, "");
-                        processFile();
-                    };
-                    reader.readAsArrayBuffer(file);
+                        });
+
+                    if (!targetFile) {
+                        outputPre.textContent = `Error: No ${fileExtension.source.replace(/\\|\^|\$/g, '')} file found in ZIP archive.`;
+                        fileData = null;
+                        toggleSaveButton();
+                        return;
+                    }
+                    // Extract as ArrayBuffer
+                    const targetBuffer = await targetFile.async('arraybuffer');
+                    fileData = targetBuffer;
+                    fileData.fileName = targetFile.name.replace(/\.[^/.]+$/, "");
+                    processFile();
+                } catch (err) {
+                    outputPre.textContent = `Error: Failed to extract file from ZIP. ${err.message || err}`;
+                    fileData = null;
+                    toggleSaveButton();
+                }
+            };
+        reader.readAsArrayBuffer(file);
+        } else {
+            // Handle normal file
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                fileData = e.target.result;
+                fileData.fileName = file.name.replace(/\.[^/.]+$/, "");
+                processFile();
+            };
+            reader.readAsArrayBuffer(file);
                 }
             } else {
                 fileData = null;
@@ -334,6 +358,7 @@ init().then(() => {
     if (modeZX80Basic) modeZX80Basic.addEventListener('change', () => processFile && processFile());
     if (modeZX81Basic) modeZX81Basic.addEventListener('change', () => processFile && processFile());
     if (charsetToggle) charsetToggle.addEventListener('change', () => processFile && processFile());
+    if (baseaddNumber) baseaddNumber.addEventListener('change', () => processFile && processFile());
     
     // Event listener for the Save button
     saveButton.addEventListener('click', () => {

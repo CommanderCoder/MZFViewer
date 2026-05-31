@@ -66,12 +66,13 @@ impl MZLowerCase
 ///            "ZX80BASIC" for ZX80 Basic, "ZX81BASIC" for ZX81 Basic.
 /// * `machine` : type of machine to process binary
 /// * `charset_flag` - A boolean indicating whether to use the ASCII character set for detokenization.
+/// * `start_address` - A u16 integer indicating the start address for Sinclair Z80 files.
 ///
 /// # Returns
 /// A `String` containing the detokenized BASIC listing or an error message.
 /// This needs to be safe HTML as it will be interpreted by browser for INV and Special characters
 #[wasm_bindgen]
-pub fn process_binary(data: &[u8], mode: String, machine: MZFMachine, charset_flag: bool) -> String {
+pub fn process_binary(data: &[u8], mode: String, machine: MZFMachine, charset_flag: bool, user_start_address: u16) -> String {
     // Determine the processing mode based on the selected mode.
     let version = match mode.as_str() {
         "SA" => MZFEncoding::SA5510,
@@ -91,7 +92,7 @@ pub fn process_binary(data: &[u8], mode: String, machine: MZFMachine, charset_fl
                     u16::from_le_bytes([data[0x14], data[0x15]]), // default start address is found at bytes 0x14,0x15 (LE)
                     u16::from_le_bytes([data[0x16], data[0x17]]), // default exec address is found at bytes 0x16,0x17 (LE)
                 ),
-                MZFMachine::Sinclair => (0, 0, 0)
+                MZFMachine::Sinclair => (0, user_start_address, 0)
             };
             let lowercase = MZLowerCase::new();
 

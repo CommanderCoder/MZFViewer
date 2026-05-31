@@ -36,6 +36,7 @@ One last task, and another 20 minutes with CoPilot, and we have a ascii/hex dump
 . You need [rustup](https://www.rust-lang.org/tools/install).
 
 . `cargo install wasm-pack` 
+. `brew install wasm-pack`
 
 . `npm install`
 
@@ -43,6 +44,7 @@ One last task, and another 20 minutes with CoPilot, and we have a ascii/hex dump
 
 `npm run dev --target=sinclair`
 
+`npm run dev:sinclair`
 
 ### Alternative
 
