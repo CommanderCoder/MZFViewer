@@ -105,12 +105,16 @@
                 <label for="charsetToggle" class="ml-2 text-gray-700 text-base font-medium">ASCII charset</label>
             </div>
             <div>
-            <p id="outputType"></p>
-            </div>
-            <div id="mzbyte0" class="col-span-full">
+            <p id="outputType" class="empty:hidden bg-yellow-50 border-4 border-yellow-400 p-4 rounded-lg" >
+                <div id="mzbyte0" >
                         <p>Byte 0 of Hex Dump is the 
                 <a href="https://www.sharpmz.net/filetypes.htm" class="text-blue-600 hover:underline">file type</a>.
+                </p>
+                </div>
+
             </p>
+            </div>
+            <div class="col-span-full">
             <p>MZF file format has a 128 byte header.  To view a Z80 Disassembly without skipping 128 bytes, use the <a
                  href="https://zxviewer.web.app/" class="text-blue-600 hover:underline">ZXViewer</a>.</p>
             </div>
