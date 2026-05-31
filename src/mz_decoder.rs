@@ -84,7 +84,7 @@ impl MZDecoder {
             (164, 's'), (165, 'u'), (166, 'i'), (169, 'k'), (170, 'f'), (171, 'v'), (175, 'j'),
             (176, 'n'), (179, 'm'), (183, 'o'), (184, 'l'), (189, 'y')
         ];
-        
+
         for (byte, ch) in ascii_map {
             sharp_ascii.insert(byte, ch);
         }
@@ -243,20 +243,35 @@ impl MZDecoder {
                                 }
                             }
                             MZBasicVersion::V1Z013B => {
-                                let mut tok = (b - 0x80) as usize;
-                                if b == 0xfe || b == 0xff {
-                                    let next_byte = Self::read_u8(data, &mut offset)?;
-                                    bytes_read += 1;
-                                    tok = (next_byte - 0x80) as usize;
-                                }
-                                match b {
-                                    0xfe if tok < tokens2.len() => line.push_str(tokens2[tok]),
-                                    0xff if tok < tokens3.len() => line.push_str(tokens3[tok]),
-                                    _ if b >= 0x80 => line.push_str(tokens1[tok]),
-                                    _ => line.push_str(&format!(":0x{:02X} 0x{:02X}]", b, tok)),
-                                }
-                                if b == 0x97 || b == 0x94 {
-                                    literal_mode = true;
+                                if b >= 0x80 {
+                                    let mut tok = (b - 0x80) as usize;
+
+                                    if b == 0xfe || b == 0xff {
+                                        let next_byte = Self::read_u8(data, &mut offset)?;
+                                        bytes_read += 1;
+                                        // Ensure next_byte is safe to subtract from
+                                        if next_byte >= 0x80 {
+                                            tok = (next_byte - 0x80) as usize;
+                                        } else {
+                                            // Handle error or fallback if next_byte is invalid
+                                            tok = usize::MAX; 
+                                        }
+                                    }
+
+                                    match b {
+                                        0xfe if tok < tokens2.len() => line.push_str(tokens2[tok]),
+                                        0xff if tok < tokens3.len() => line.push_str(tokens3[tok]),
+                                        0xfe | 0xff => line.push_str(&format!(":[INVALID TOK 0x{:02X}]", b)),
+                                        _ if tok < tokens1.len() => line.push_str(tokens1[tok]),
+                                        _ => line.push_str(&format!(":[OUT OF BOUNDS 0x{:02X}]", b)),
+                                    }
+
+                                    if b == 0x97 || b == 0x94 {
+                                        literal_mode = true;
+                                    }
+                                } else {
+                                    // Safely handles bytes below 0x80
+                                    line.push_str(&format!(":[0x{:02X}]", b));
                                 }
                             }
                             MZBasicVersion::SA5510 => {
